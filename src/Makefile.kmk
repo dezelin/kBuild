@@ -1,7 +1,0 @@
-# $Id$
-
-SUBDIRS = gmake makedep
-
-DEPTH = ..
-include $(PATH_KBUILD)/rules.kmk
-
