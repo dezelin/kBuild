@@ -518,9 +518,21 @@ snap_deps (void)
   if (f != 0 && f->is_target)
     posix_pedantic = 1;
 
+  /* kmk changed */
   f = lookup_file (".NOTPARALLEL");
   if (f != 0 && f->is_target)
-    not_parallel = 1;
+    {
+      if (f->deps == 0)
+        {
+          DB (DB_KMK, (_("not_parallel -1\n")));
+          not_parallel = -1;
+        }
+      else
+        for (d = f->deps; d != 0; d = d->next)
+          for (f2 = d->file; f2 != 0; f2 = f2->prev)
+            f2->command_flags |= COMMANDS_NOTPARALLEL;
+    }
+
 }
 
 /* Set the `command_state' member of FILE and all its `also_make's.  */
