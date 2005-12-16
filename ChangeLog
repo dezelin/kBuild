@@ -1,0 +1,132 @@
+/* $Id$ */
+
+2005-12-13: bird
+    - kBuild/bin/x86.linux/kmk,
+      kBuild/bin/x86.linux/kmk_append,
+      kBuild/bin/x86.linux/kmk_cp,
+      kBuild/bin/x86.linux/kmk_echo,
+      kBuild/bin/x86.linux/kmk_mkdir,
+      kBuild/bin/x86.linux/kmk_rm:
+        o Rebuild with current sources.
+    - src/gmake/Makefile:
+        o Prefixed external tools with kmk_.
+
+2005-12-12: bird
+    - kBuild/footer.kmk, kBuild/header.kmk:
+        o Generic pass stuff.
+        o Enabled and weeded out the new target install method.
+        o Added separate install target type.
+        o Added separate installs pass.
+        o Fixed those $$$$(PATH_<target>) problems.
+        o General clean up removing lot's of duplicate stuff.
+    - kBuild/tools/ALP.kmk, kBuild/tools/GCC.kmk, kBuild/tools/GCC3.kmk,
+      kBuild/tools/GCC3OMF.kmk, kBuild/tools/MINGW32.kmk, kBuild/tools/NASM.kmk,
+      kBuild/tools/VCC70.kmk:
+        o Adjusted to new parameters for the link rules.
+        o List all output files as targets for the rules.
+    - kBuild/config.kmk, kBuild/cfg/x86.win32.va2003.kmk:
+        o Removed early attempts which isn't used anylonger.
+    - src/gmake/remake.c, src/gmake/commands.c, src/gmake/commands.h:
+        o Fixed not parallel assertion on targets with no commands.
+
+2005-12-11: bird
+    - src/gmake/kmkbuiltin/append.c, src/gmake/kmkbuiltin.h, src/gmake/kmkbuiltin.c,
+      src/gmake/Makefile.kmk, src/gmake/variables.c:
+        o New command 'append' which appends text to a file, creating the file if necessary.
+        o KMK_BUILTIN is listing the supported commands (used to be "1").
+    - src/gmake/kmkbuiltin/cp_utils.c:
+        o Add O_BINARY to all open calls.
+    - src/gmake/function.c:
+        o Fixed abspath on OS/2.
+    - src/kDepPre/kDepPre.c:
+        o Killed some warnings and made it build on OS/2 and FreeBSD.
+
+2005-11-07: bird
+    - kBuild/tools/VCC70.kmk:
+        o Use the new -s option for dependencies.
+    - src/kDepPre/kDepPre.c, kBuild/bin/x86.linux/kDepPre, kBuild/bin/x86.win32/kDepPre.exe:
+        o Added new option -s for generating stub dependencies just like -Wp,-MP.
+    - kBuild/tools/GCC3.kmk, kBuild/tools/GCC3OMF.kmk:
+        o Added -Wp,-MP to compile jobs for better dependencies.
+
+2005-10-31: bird
+    - kBuild/tools/VCC70.kmk:
+        o Use the -f option with kDepPre to make sure nt/wine/cl doesn't
+          screw up the path casing anywhere.
+    - kBuild/bin/x86.linux/kDepPre, kBuild/bin/x86.win32/kDepPre.exe:
+        o Rebuild with latest code.
+2005-10-30: bird
+    - kBuild/env.sh:
+        o amd64.
+        o kDepCCxx -> kDepPre. Ash.
+    - kBuild/bin/amd64.linux/kDepPre, src/kDepPre/kDepPre.c:
+        o Fix case option - need it on unix for cl.exe with wine.
+
+2005-10-29: bird
+    - kBuild/bin/amd64.linux/kDepPre, src/kDepPre/kDepPre.c:
+        o Strip drive letters on non-PC OSes.
+
+2005-10-28: bird
+    - kBuild/footer.h:
+        o Fixed a couple of defaults so it all works right on amd64.
+    - kBuild/bin/amd64.linux/:
+        o Added binaries. ash is 32-bit!
+
+2005-10-14: bird
+    - src/kDepPre/kDepPre.c, kBuild/bin/x86.win32/kDepPre.exe:
+        o Corrected bug in line skipping where two lines would be skipped.
+        o Corrected slashes on win32.
+
+2005-10-03: bird
+    - src/kDepPre/kDepPre.c, kBuild/bin/x86.win32/kDepPre.exe:
+        o Fixed stupid stupid bug in the win32 case correcting code.
+          Rebuilt the win32 binary.
+
+2005-08-11: bird
+    - kBuild/footer.kmk:
+        o Enh. the _OBJECT_BASE hack for stripping of source paths within the project.
+
+    - kBuild/tools/VCC70.kmk:
+        o Use $(tolower ) to construct the right .pdb names for cleanup.
+
+    - src/gmake/read.c:
+        o print target name 'target pattern' errors.
+
+    - kBuild/header.kmk:
+        o Use $(abspath ).
+
+    - src/gmake/variable.c:
+        o Added KMK_FEATURES which indicates what's present+working and what's not.
+
+    - src/gmake/w32/pathstuff.c, src/kDepPre/kDepPre.c, src/kDepPre/Makefile.kmk:
+        o Fixed casing paths on win32.
+
+    - src/gmake/function.c, src/gmake/Makefile.kmk:
+        o Fixed $(abspath ) on Win32 and OS/2.
+        o Added $(tolower ) and $(toupper ).
+
+2005-06-16: bird
+    - ALL:
+        o Bootstrap and ported to FreeBSD 5.x on AMD64.
+
+2005-05-06: bird
+    - ALL:
+        o Working on the build system of the build system. :-)
+        o Ported the kmkbuiltin stuff to OS/2 as a prep to the win32 effort.
+
+[missing a lot!]
+
+2002-10-15: bird
+    - ALL:
+        o Created a somewhat rought directory structure.
+
+    - src/fastdep:
+        o Imported current sources from ODIN32.
+
+    - src/kmk:
+        o Imported current sources from the freebsd tree.
+
+2002-10-15: ktk
+    - ALL:      Create repository.
+
+

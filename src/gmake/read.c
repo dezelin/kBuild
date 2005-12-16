@@ -223,12 +223,13 @@ read_all_makefiles (char **makefiles)
       static char *default_makefiles[] =
 #ifdef VMS
 	/* all lower case since readdir() (the vms version) 'lowercasifies' */
-	{ "makefile.vms", "gnumakefile.", "makefile.", 0 };
+	{ "makefile.kmk", "makefile.vms", "gnumakefile.", "makefile.", 0 };
 #else
 #ifdef _AMIGA
-	{ "GNUmakefile", "Makefile", "SMakefile", 0 };
+        /* what's the deal here? no dots? */
+	{ "Makefile.kmk", "makefile.kmk", "GNUmakefile", "Makefile", "SMakefile", 0 };
 #else /* !Amiga && !VMS */
-	{ "GNUmakefile", "makefile", "Makefile", 0 };
+	{ "Makefile.kmk", "makefile.kmk", "GNUmakefile", "makefile", "Makefile", 0 };
 #endif /* AMIGA */
 #endif /* VMS */
       register char **p = default_makefiles;
@@ -1154,11 +1155,11 @@ eval (struct ebuffer *ebuf, int set_default)
             if (target == 0)
               fatal (fstart, _("missing target pattern"));
             else if (target->next != 0)
-              fatal (fstart, _("multiple target patterns"));
+              fatal (fstart, _("multiple target patterns (target `%s')"), target->name);
             pattern = target->name;
             pattern_percent = find_percent (pattern);
             if (pattern_percent == 0)
-              fatal (fstart, _("target pattern contains no `%%'"));
+              fatal (fstart, _("target pattern contains no `%%' (target `%s')"), target->name);
             free((char *)target);
           }
         else
@@ -2165,25 +2166,26 @@ find_char_unquote (char *string, int stop1, int stop2, int blank)
 {
   unsigned int string_len = 0;
   register char *p = string;
+  register int ch;
 
   while (1)
     {
       if (stop2 && blank)
-	while (*p != '\0' && *p != stop1 && *p != stop2
-	       && ! isblank ((unsigned char) *p))
+	while ((ch = *p) != '\0' && ch != stop1 && ch != stop2
+	       && ! isblank ((unsigned char) ch))
 	  ++p;
       else if (stop2)
-	while (*p != '\0' && *p != stop1 && *p != stop2)
+	while ((ch = *p) != '\0' && ch != stop1 && ch != stop2)
 	  ++p;
       else if (blank)
-	while (*p != '\0' && *p != stop1
-	       && ! isblank ((unsigned char) *p))
+	while ((ch = *p) != '\0' && ch != stop1
+	       && ! isblank ((unsigned char) ch))
 	  ++p;
       else
-	while (*p != '\0' && *p != stop1)
+	while ((ch = *p) != '\0' && ch != stop1)
 	  ++p;
 
-      if (*p == '\0')
+      if (ch == '\0')
 	break;
 
       if (p > string && p[-1] == '\\')

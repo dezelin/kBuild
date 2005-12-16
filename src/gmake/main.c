@@ -485,8 +485,10 @@ struct file *default_file;
 
 int posix_pedantic;
 
-/* Nonzero if we have seen the `.NOTPARALLEL' target.
-   This turns off parallel builds for this invocation of make.  */
+/* Negative if we have seen the `.NOTPARALLEL' target with empty dependency list.
+   Zero if no `.NOTPARALLEL' or no file in the dependency list is being executed.
+   Positive when a file in `.NOTPARALLEL' is being made.
+   Nonzero values have the effect of disabeling parallel building. */
 
 int not_parallel;
 
@@ -619,6 +621,9 @@ decode_debug_flags (void)
               break;
             case 'v':
               db_level |= DB_BASIC | DB_VERBOSE;
+              break;
+            case 'k':
+              db_level |= DB_KMK;
               break;
             default:
               fatal (NILF, _("unknown debug level specification `%s'"), p);
@@ -2051,7 +2056,7 @@ main (int argc, char **argv, char **envp)
 	       termination. */
 	    int pid;
 	    int status;
-	    pid = child_execute_job (0, 1, nargv, environ);
+	    pid = child_execute_job (0, 1, nargv, environ, NULL);
 
 	    /* is this loop really necessary? */
 	    do {

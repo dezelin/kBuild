@@ -1,0 +1,602 @@
+# $Id$
+## @file
+#
+# kBuild - File included at top of makefile.
+#
+# Copyright (c) 2004-2005 knut st. osmundsen <bird-srcspam@anduin.net>
+#
+#
+# This file is part of kBuild.
+#
+# kBuild is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# kBuild is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with kBuild; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#
+#
+
+ifndef __header_kmk__
+# start-of-file-content
+
+#
+# default rule
+#
+all: all_recursive
+
+#
+# Try avoid inference rules.
+#
+.SUFFIXES:
+SUFFIXES :=
+
+
+#
+# General purpose macros.
+#
+
+## get last word in a list.
+# @returns  last word in $1.
+# @param    $1	Word list.
+lastword = $(word $(words $(1)), $(1))
+
+
+#
+# Assert build type.
+#
+ifndef BUILD_TYPE
+ifndef BUILD_MODE
+$(error kBuild: You must define BUILD_TYPE!)
+endif
+BUILD_TYPE          := $(BUILD_MODE)
+endif
+ifeq ($(BUILD_TYPE),DEBUG)
+BUILD_TYPE          := debug
+endif
+ifeq ($(BUILD_TYPE),RELEASE)
+BUILD_TYPE          := release
+endif
+ifeq ($(BUILD_TYPE),PROFILE)
+BUILD_TYPE          := profile
+endif
+
+
+#
+# Assert build platform.
+#
+_BUILD_PLATFORM_OK  := 0
+# OS/2 (have uppercase legacy)
+ifeq ($(BUILD_PLATFORM),OS2)
+override BUILD_PLATFORM := os2
+endif
+ifeq ($(BUILD_PLATFORM),os2)
+_BUILD_PLATFORM_OK  := 1
+endif
+
+# Linux
+ifeq ($(BUILD_PLATFORM),LINUX)
+$(error kBuild: BUILD_PLATFORM must be all lowercase!)
+endif
+ifeq ($(BUILD_PLATFORM),linux)
+_BUILD_PLATFORM_OK  := 1
+endif
+
+# Win32
+ifeq ($(BUILD_PLATFORM),WIN32)
+$(error kBuild: BUILD_PLATFORM must be all lowercase!)
+endif
+ifeq ($(BUILD_PLATFORM),win32)
+_BUILD_PLATFORM_OK  := 1
+endif
+
+# L4
+ifeq ($(BUILD_PLATFORM),L4)
+$(error kBuild: BUILD_PLATFORM must be all lowercase!)
+endif
+ifeq ($(BUILD_PLATFORM),l4)
+_BUILD_PLATFORM_OK  := 1
+endif
+
+# FreeBSD
+ifeq ($(BUILD_PLATFORM),FreeBSD)
+$(error kBuild: BUILD_PLATFORM must be all lowercase!)
+endif
+ifeq ($(BUILD_PLATFORM),freebsd)
+_BUILD_PLATFORM_OK  := 1
+endif
+
+ifeq ($(_BUILD_PLATFORM_OK),0)
+$(error kBuild: BUILD_PLATFORM value '$(BUILD_PLATFORM)' was not recongized!)
+endif
+
+# Fill in defaults if needed.
+ifndef BUILD_PLATFORM_ARCH
+BUILD_PLATFORM_ARCH   := x86
+endif
+ifndef BUILD_PLATFORM_CPU
+BUILD_PLATFORM_CPU    := i586
+endif
+
+
+#
+# Assert target platform.
+#
+ifndef BUILD_TARGET
+# not defined, set to the same as build platform
+BUILD_TARGET        := $(BUILD_PLATFORM)
+else
+_BUILD_TARGET_OK    := 0
+# OS/2
+ifeq ($(BUILD_TARGET),OS2)
+$(error kBuild: BUILD_TARGET must be all lowercase!)
+endif
+ifeq ($(BUILD_TARGET),os2)
+_BUILD_TARGET_OK    := 1
+endif
+
+# Linux
+ifeq ($(BUILD_TARGET),LINUX)
+$(error kBuild: BUILD_TARGET must be all lowercase!)
+endif
+ifeq ($(BUILD_TARGET),linux)
+_BUILD_TARGET_OK    := 1
+endif
+
+# Win32
+ifeq ($(BUILD_TARGET),WIN32)
+$(error kBuild: BUILD_TARGET must be all lowercase!)
+endif
+ifeq ($(BUILD_TARGET),win32)
+_BUILD_TARGET_OK    := 1
+endif
+
+# L4
+ifeq ($(BUILD_TARGET),L4)
+$(error kBuild: BUILD_TARGET must be all lowercase!)
+endif
+ifeq ($(BUILD_TARGET),l4)
+_BUILD_TARGET_OK    := 1
+endif
+
+# FreeBSD
+ifeq ($(BUILD_TARGET),FreeBSD)
+$(error kBuild: BUILD_TARGET must be all lowercase!)
+endif
+ifeq ($(BUILD_TARGET),freebsd)
+_BUILD_TARGET_OK    := 1
+endif
+
+ifeq ($(_BUILD_TARGET_OK),0)
+$(error kBuild: BUILD_TARGET value '$(BUILD_TARGET)' was not recongized!)
+endif
+endif
+
+# Fill in defaults if needed.
+ifndef BUILD_TARGET_ARCH
+BUILD_TARGET_ARCH   := x86
+endif
+ifndef BUILD_TARGET_CPU
+BUILD_TARGET_CPU    := i586
+endif
+
+# Adjust the DEPTH definition first
+ifeq ($(strip $(DEPTH)),)
+DEPTH := .
+endif
+
+#
+# Common definitions.
+#
+ifeq ($(filter abspath,$(KMK_FEATURES)),abspath)
+PATH_CURRENT        := $(abspath $(CURDIR))
+PATH_ROOT           := $(abspath $(PATH_CURRENT)/$(DEPTH))
+
+else
+
+PATH_CURRENT        := $(CURDIR)
+# Get the real root path.
+PATH_ROOT           := $(PATH_CURRENT)
+ifneq ($(DEPTH),.)
+$(foreach d,$(subst /, ,$(DEPTH)), $(eval PATH_ROOT := $(patsubst %/,%,$(dir $(PATH_ROOT)))) )
+endif
+
+endif
+# Subdirectory relative to the root.
+ifneq ($(PATH_ROOT),$(PATH_CURRENT))
+CURSUBDIR           := $(patsubst $(PATH_ROOT)/%,%,$(PATH_CURRENT))
+else
+CURSUBDIR           := .
+endif
+
+# Output directories.
+ifndef PATH_OUT_BASE
+PATH_OUT_BASE       := $(PATH_ROOT)/out
+endif
+ifndef PATH_OUT
+ifeq ($(BUILD_PLATFORM_ARCH),x86)
+ifdef BUILD_TARGET_SUB # (BUILD_TARGET_SUB is not currently recognized by kBuild in any other places.)
+PATH_OUT            := $(PATH_OUT_BASE)/$(BUILD_TARGET)/$(BUILD_TARGET_SUB)/$(BUILD_TYPE)
+else
+PATH_OUT            := $(PATH_OUT_BASE)/$(BUILD_TARGET)/$(BUILD_TYPE)
+endif
+else  # !x86
+ifdef BUILD_TARGET_SUB # (BUILD_TARGET_SUB is not currently recognized by kBuild in any other places.)
+PATH_OUT            := $(PATH_OUT_BASE)/$(BUILD_TARGET)/$(BUILD_TARGET_ARCH)/$(BUILD_TARGET_SUB)/$(BUILD_TYPE)
+else
+PATH_OUT            := $(PATH_OUT_BASE)/$(BUILD_TARGET)/$(BUILD_TARGET_ARCH)/$(BUILD_TYPE)
+endif
+endif # !x86
+endif # !define PATH_OUT
+PATH_OBJ             = $(PATH_OUT)/obj
+PATH_TARGET          = $(PATH_OBJ)/$(CURSUBDIR)
+PATH_INS             = $(PATH_OUT)
+PATH_BIN             = $(PATH_INS)/bin
+PATH_DLL             = $(PATH_INS)/bin
+PATH_SYS             = $(PATH_INS)/bin
+PATH_LIB             = $(PATH_INS)/lib
+PATH_DOC             = $(PATH_INS)/doc
+
+# Usually kBuild is external to the source tree.
+ifndef PATH_KBUILD
+PATH_KBUILD         := $(PATH_ROOT)/kBuild
+endif
+ifeq ($(filter abspath,$(KMK_FEATURES)),abspath)
+PATH_KBUILD         := $(abspath $(PATH_KBUILD))
+endif
+# kBuild files which might be of interest.
+FILE_KBUILD_HEADER  := $(PATH_KBUILD)/header.kmk
+FILE_KBUILD_CONFIG  := $(PATH_KBUILD)/config.kmk
+FILE_KBUILD_FOOTER  := $(PATH_KBUILD)/footer.kmk
+
+SUFF_DEP            := .dep
+MAKEFILE            := $(firstword $(MAKEFILE_LIST))
+
+
+#
+# Get rid of the GNU Make default stuff
+#
+ifndef KMK_VERSION
+include $(PATH_KBUILD)/StampOutPredefines.kmk
+endif
+
+#
+# Build platform setup.
+#
+PATH_TOOLS          := $(PATH_KBUILD)/bin/$(BUILD_PLATFORM_ARCH).$(BUILD_PLATFORM)
+
+# OS/2
+ifeq ($(BUILD_PLATFORM),os2)
+EXEC_X86_WIN32      := innopec.exe
+HOSTSUFF_EXE        := .exe
+endif
+
+# Linux
+ifeq ($(BUILD_PLATFORM),linux)
+EXEC_X86_WIN32      := wine
+HOSTSUFF_EXE        :=
+endif
+
+# Win32
+ifeq ($(BUILD_PLATFORM),win32)
+EXEC_X86_WIN32      :=
+HOSTSUFF_EXE        := .exe
+endif
+
+# FreeBSD
+ifeq ($(BUILD_PLATFORM),freebsd)
+EXEC_X86_WIN32      := wine
+HOSTSUFF_EXE        :=
+endif
+
+
+#
+# Build target setup.
+#
+ifeq ($(BUILD_TARGET),os2)
+SUFF_OBJ            := .obj
+SUFF_LIB            := .lib
+SUFF_DLL            := .dll
+SUFF_EXE            := .exe
+SUFF_SYS            := .sys
+SUFF_RES            := .res
+endif
+ifeq ($(BUILD_TARGET),win32)
+SUFF_OBJ            := .obj
+SUFF_LIB            := .lib
+SUFF_DLL            := .dll
+SUFF_EXE            := .exe
+SUFF_SYS            := .sys
+SUFF_RES            := .res
+endif
+ifeq ($(BUILD_TARGET),linux)
+SUFF_OBJ            := .o
+SUFF_LIB            := .a
+SUFF_DLL            := .so
+SUFF_EXE            :=
+SUFF_SYS            := .a
+SUFF_RES            :=
+endif
+ifeq ($(BUILD_TARGET),l4)
+SUFF_OBJ            := .o
+SUFF_LIB            := .a
+SUFF_DLL            := .s.so
+SUFF_EXE            :=
+SUFF_SYS            := .a
+SUFF_RES            :=
+endif
+
+#
+# Standard kBuild tools.
+#
+DEP                 := $(PATH_TOOLS)/kDep$(HOSTSUFF_EXE)
+DEP_PRE             := $(PATH_TOOLS)/kDepPre$(HOSTSUFF_EXE)
+ifeq ($(MAKE),kmk)
+MAKE                := $(PATH_TOOLS)/kmk$(HOSTSUFF_EXE)
+endif
+
+# Standard Unix shell utils
+ifdef KMK_BUILTIN
+ECHO                := kmk_builtin_echo
+MKDIR               := kmk_builtin_mkdir
+RM                  := kmk_builtin_rm
+CP                  := kmk_builtin_cp
+else
+ECHO                := echo
+MKDIR               := $(PATH_TOOLS)/mkdir$(HOSTSUFF_EXE)
+RM                  := $(PATH_TOOLS)/rm$(HOSTSUFF_EXE)
+CP                  := $(PATH_TOOLS)/cp$(HOSTSUFF_EXE)
+APPEND              := $(PATH_TOOLS)/append$(HOSTSUFF_EXE)
+endif
+CP_EXT              := $(PATH_TOOLS)/cp$(HOSTSUFF_EXE)
+MV                  := $(PATH_TOOLS)/mv$(HOSTSUFF_EXE)
+SED                 := $(PATH_TOOLS)/sed$(HOSTSUFF_EXE)
+CAT                 := $(PATH_TOOLS)/cat$(HOSTSUFF_EXE)
+LN_SYMLINK          := $(CP)
+#LN_SYMLINK          := ln -s
+# Bourn shell clone.
+MAKESHELL           := $(PATH_TOOLS)/ash$(HOSTSUFF_EXE)
+SHELL               := $(MAKESHELL)
+export SHELL MAKESHELL
+
+# kBuild utils.
+ifeq ($(filter append,$(KMK_BUILTIN)),append)
+APPEND              := kmk_builtin_append
+else
+APPEND              := $(PATH_TOOLS)/append$(HOSTSUFF_EXE)
+endif
+
+
+#
+# Message macros.
+#
+
+ifndef BUILD_QUIET
+ifdef BUILD_DEBUG
+BUILD_VERBOSE := 9
+endif
+MSG_L1		= @$(ECHO) "kBuild: $1"
+ifdef BUILD_VERBOSE
+MSG_L2		= @$(ECHO) "kBuild: $1"
+QUIET		:=
+else
+QUIET		:= @
+MSG_L2		=
+endif
+ifdef BUILD_DEBUG
+MSG_L3      = @$(ECHO) "kBuild: $1"
+else
+MSG_L3      =
+endif
+else
+QUIET		:=
+MSG_L1		=
+MSG_L2      =
+MSG_L3      =
+endif
+
+## ABSPATH - make paths absolute.
+# This implementation is clumsy and doesn't resolve '..' and '.' components.
+#
+# @param	$1	The paths to make absolute.
+ifeq ($(filter abspath,$(KMK_FEATURES)),abspath)
+ABSPATH = $(abspath $(1))
+else
+ABSPATH = $(foreach path,$(1)\
+            ,$(strip $(if $(subst <,,$(firstword $(subst /, ,<$(path)))),\
+                      $(if $(patsubst %:,,$(firstword $(subst :,: ,$(path)))),$(PATH_CURRENT)/$(path),$(path)),\
+                      $(path))))
+endif
+
+## DIRDEP - make create directory dependencies.
+#
+# @param	$1	The paths to the directories which must be created.
+ifeq ($(BUILD_PLATFORM),win32)
+DIRDEP = $(patsubst %/,%,$(1))
+else
+DIRDEP = $(foreach path,$(patsubst %/,%,$(1)),$(path)/)
+endif
+
+
+## Cygwin kludge.
+# This converts /cygdrive/x/% to x:%.
+#
+# @param	$1	The paths to make native.
+# @remark	This macro is pretty much obsolete since we don't use cygwin base make.
+ifneq ($(patsubst /cygdrive/%,%,$(CURDIR)),$(CURDIR))
+CYGPATHMIXED = $(foreach path,$(1)\
+   ,$(if $(patsubst /cygdrive/%,,$(path)),$(path),$(patsubst $(strip $(firstword $(subst /, ,$(patsubst /cygdrive/%,%,$(path)))))/%,$(strip $(firstword $(subst /, ,$(patsubst /cygdrive/%,%,$(path))))):/%,$(patsubst /cygdrive/%,%,$(path)))))
+else
+CYGPATHMIXED = $(1)
+endif
+
+#
+# Initialize some of the globals which the Config.kmk and
+# others can add stuff to if they like for processing in the footer.
+#
+
+## ALL_TARGET
+# This is the list of all targets.
+ALL_TARGETS :=
+
+## TEMPLATE_PATHS
+# List a paths (separated by space) where templates can be found.
+TEMPLATE_PATHS :=
+
+## TOOL_PATHS
+# List of paths (separated by space) where tools can be found.
+TOOL_PATHS :=
+
+## SDK_PATHS
+# List of paths (separated by space) where SDKs can be found.
+SDK_PATHS :=
+
+## Proritized list of the default makefile when walking subdirectories.
+# The user can overload this list.
+DEFAULT_MAKEFILE := Makefile.kmk makefile.kmk Makefile makefile
+
+## PROPS_SINGLE
+# The list of non-accumulative target properties.
+# A Config.kmk file can add it's own properties to this list and kBuild
+# will do the necessary inheritance from templates to targets.
+PROPS_SINGLE := TOOL ARTOOL CTOOL CXXTOOL ASTOOL LDTOOL INST NOINST
+
+## PROPS_DEFERRED
+# This list of non-accumulative target properties which are functions,
+# and thus should not be expanded until the very last moment.
+PROPS_DEFERRED := INSTFUN INSTALLER
+
+## PROPS_ACCUMULATE
+# The list of accumulative target properties.
+# A Config.kmk file can add it's own properties to this list and kBuild
+# will do the necessary inheritance from templates to targets.
+PROPS_ACCUMULATE := \
+	SDKS DEFS INCS SOURCES \
+	COPTS CFLAGS CDEFS CINCS CXXOPTS CXXFLAGS CXXDEFS CXXINCS \
+	ASOPTS ASFLAGS ASDEFS ASINCS \
+	LDFLAGS LIBS LIBPATH \
+	BLD_TYPE BLD_TRG BLD_TRG_ARCH BLD_TRG_CPU \
+	SYSSUFF EXESUFF DLLSUFF LIBSUFF ARLIBSUFF \
+
+
+## PROPS_TOOLS
+# This is a subset of the other PROPS
+PROPS_TOOLS := TOOL CTOOL CXXTOOL ASTOOL ARTOOL LDTOOL
+
+
+#
+# Pass configuration.
+#
+# The PASS_<passname>_trgs variable is listing the targets.
+# The PASS_<passname>_vars variable is listing the target variables.
+# The PASS_<passname>_pass variable is the lowercased passname.
+#
+
+## PASS: bldprogs
+# This pass builds targets which are required for building the rest.
+PASS_BLDPROGS       := Build Programs
+PASS_BLDPROGS_trgs  :=
+PASS_BLDPROGS_vars  := _BLDPROGS
+PASS_BLDPROGS_pass  := bldprogs
+
+## PASS: libraries
+# This pass builds library targets.
+PASS_LIBRARIES      := Libraries
+PASS_LIBRARIES_trgs :=
+PASS_LIBRARIES_vars := _LIBS _IMPORT_LIBS _OTHER_LIBRARIES
+PASS_LIBRARIES_pass := libraries
+
+## PASS: binaries
+# This pass builds dll targets.
+PASS_DLLS           := DLLs
+PASS_DLLS_trgs      :=
+PASS_DLLS_vars      := _DLLS _OTHER_DLLS
+PASS_DLLS_pass      := dlls
+
+## PASS: binaries
+# This pass builds binary targets, i.e. programs, system modules and stuff.
+PASS_BINARIES       := Programs
+PASS_BINARIES_trgs  :=
+PASS_BINARIES_vars  := _PROGRAMS _SYSMODS _OTHER_BINARIES
+PASS_BINARIES_pass  := binaries
+
+## PASS: others
+# This pass builds other targets.
+PASS_OTHERS         := Other Stuff
+PASS_OTHERS_trgs    :=
+PASS_OTHERS_vars    := _OTHERS
+PASS_OTHERS_pass    := others
+
+## PASS: install
+# This pass installs the built entities to a sandbox area.
+PASS_INSTALLS       := Install
+PASS_INSTALLS_trgs  :=
+PASS_INSTALLS_vars  := _INSTALLS
+PASS_INSTALLS_pass  := installs
+
+## PASS: packing
+# This pass processes custom packing rules.
+PASS_PACKING        := Packing
+PASS_PACKING_trgs   := packing
+PASS_PACKING_vars   :=
+PASS_PACKING_pass   := packing
+
+## PASS: clean
+# This pass removes all generated files.
+PASS_CLEAN          := Clean
+PASS_CLEAN_trgs     := do-clean
+PASS_CLEAN_vars     :=
+PASS_CLEAN_pass     := clean
+# alias
+clean: pass_clean
+
+## PASS: nothing
+# This pass just walks the tree.
+PASS_NOTHING        := Nothing
+PASS_NOTHING_trgs   := do-nothing
+PASS_NOTHING_vars   :=
+PASS_NOTHING_pass   := nothing
+# alias
+nothing: pass_nothing
+
+## DEFAULT_PASSES
+# The default passes and their order.
+DEFAULT_PASSES := BLDPROGS LIBRARIES DLLS BINARIES OTHERS INSTALLS
+
+## PASSES
+# The passes that should be defined. This must include
+# all passes mentioned by DEFAULT_PASSES.
+PASSES := $(DEFAULT_PASSES) NOTHING CLEAN
+
+
+#
+# This is how we find the closest config.kmk.
+# It's a little hacky but I think it works fine.
+#
+_CFGDIR     := .
+_CFGFILES   := ./Config.kmk ./config.kmk
+define def_include_config
+$(eval _CFGDIR := $(_CFGDIR)/$(dir))
+_CFGFILES   += $(_CFGDIR)/Config.kmk $(_CFGDIR)/config.kmk
+endef
+# walk down the _RELATIVE_ path specified by DEPTH.
+$(foreach dir,$(subst /, ,$(DEPTH)), $(eval $(def_include_config)) )
+# add the default config file.
+_CFGFILE    := $(firstword $(wildcard $(_CFGFILES) $(FILE_KBUILD_CONFIG)))
+_CFGFILES   :=
+_CFGDIR     :=
+
+# Include the config.kmk we found file (or the default one).
+include $(_CFGFILE)
+
+
+# end-of-file-content
+__header_kmk__ := 1
+endif # __header_kmk__

@@ -57,6 +57,13 @@ struct child
     int cstatus;		/* Completion status */
 #endif
     char *sh_batch_file;        /* Script file for shell commands */
+#if defined(CONFIG_WITH_KMK_BUILTIN) || defined(MAKE_DLLSHELL)
+    int status;                 /* Status of the job. */
+    unsigned int have_status:1; /* Nonzero if status is available. */
+#endif
+#ifdef MAKE_DLLSHELL
+    unsigned int dllshelled:1;  /* Nonzero if executed thru dllshell. */
+#endif
     unsigned int remote:1;	/* Nonzero if executing remotely.  */
 
     unsigned int noerror:1;	/* Nonzero if commands contained a `-'.  */
@@ -74,8 +81,8 @@ extern void start_waiting_jobs PARAMS ((void));
 extern char **construct_command_argv PARAMS ((char *line, char **restp, struct file *file, char** batch_file));
 #ifdef VMS
 extern int child_execute_job PARAMS ((char *argv, struct child *child));
-#elif defined(__EMX__)
-extern int child_execute_job PARAMS ((int stdin_fd, int stdout_fd, char **argv, char **envp));
+#elif defined(__EMX__) || defined (MAKE_DLLSHELL)
+extern int child_execute_job PARAMS ((int stdin_fd, int stdout_fd, char **argv, char **envp, struct child *child));
 #else
 extern void child_execute_job PARAMS ((int stdin_fd, int stdout_fd, char **argv, char **envp));
 #endif
@@ -102,5 +109,9 @@ extern int fatal_signal_mask;
 #endif
 
 extern unsigned int jobserver_tokens;
+
+#ifdef MAKE_DLLSHELL
+extern pid_t wait_jobs PARAMS ((int *status, int block));
+#endif
 
 #endif /* SEEN_JOB_H */

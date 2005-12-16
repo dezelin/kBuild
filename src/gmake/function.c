@@ -29,6 +29,10 @@ Boston, MA 02111-1307, USA.  */
 #include "amiga.h"
 #endif
 
+#ifdef WINDOWS32
+#include "pathstuff.h"
+#endif
+
 
 struct function_table_entry
   {
@@ -1530,7 +1534,7 @@ func_shell (char *o, char **argv, const char *funcname UNUSED)
   CLOSE_ON_EXEC(pipedes[1]);
   CLOSE_ON_EXEC(pipedes[0]);
   /* Never use fork()/exec() here! Use spawn() instead in exec_command() */
-  pid = child_execute_job (0, pipedes[1], command_argv, envp);
+  pid = child_execute_job (0, pipedes[1], command_argv, envp, NULL);
   if (pid < 0)
     perror_with_name (error_prefix, "spawn");
 
@@ -1767,8 +1771,39 @@ abspath (const char *name, char *apath)
   if (name[0] == '\0' || apath == NULL)
     return NULL;
 
+#ifdef WINDOWS32
+  dest = w32ify((char *)name, 1);
+  if (!dest)
+      return NULL;
+  {
+  size_t len = strlen(dest);
+  memcpy(apath, dest, len);
+  dest = apath + len;
+  }
+
+  (void)end; (void)start; (void)apath_limit;
+
+#elif defined __OS2__
+  if (_abspath(apath, name, GET_PATH_MAX))
+      return NULL;
+  dest = strchr(apath, '\0');
+
+  (void)end; (void)start; (void)apath_limit; (void)dest;
+
+#else /* !WINDOWS32 && !__OS2__ */
   apath_limit = apath + GET_PATH_MAX;
 
+#ifdef HAVE_DOS_PATHS /* bird added this */
+  if (isalpha(name[0]) && name[1] == ':')
+    {
+      /* drive spec */
+      apath[0] = toupper(name[0]);
+      apath[1] = ':';
+      apath[2] = '/';
+      name += 2;
+    }
+  else
+#endif /* HAVE_DOS_PATHS */
   if (name[0] != '/')
     {
       /* It is unlikely we would make it until here but just to make sure. */
@@ -1822,9 +1857,14 @@ abspath (const char *name, char *apath)
 	  *dest = '\0';
 	}
     }
+#endif /* !WINDOWS32 && !__OS2__ */
 
   /* Unless it is root strip trailing separator.  */
+#ifdef HAVE_DOS_PATHS
+  if (dest > apath + 1 + (apath[0] != '/') && dest[-1] == '/')
+#else
   if (dest > apath + 1 && dest[-1] == '/')
+#endif
     --dest;
 
   *dest = '\0';
@@ -1908,6 +1948,30 @@ func_abspath (char *o, char **argv, const char *funcname UNUSED)
  return o;
 }
 
+#ifdef KMK
+static char *
+func_toupper_tolower (char *o, char **argv, const char *funcname)
+{
+  /* Expand the argument.  */
+  const char *p = argv[0];
+  while (*p)
+    {
+      /* convert to temporary buffer */
+      char tmp[256];
+      unsigned int i;
+      if (!strcmp(funcname, "toupper"))
+        for (i = 0; i < sizeof(tmp) && *p; i++, p++)
+          tmp[i] = toupper(*p);
+      else
+        for (i = 0; i < sizeof(tmp) && *p; i++, p++)
+          tmp[i] = tolower(*p);
+      o = variable_buffer_output (o, tmp, i);
+    }
+
+  return o;
+}
+#endif
+
 /* Lookup table for builtin functions.
 
    This doesn't have to be sorted; we use a straight lookup.  We might gain
@@ -1961,6 +2025,10 @@ static struct function_table_entry function_table_init[] =
 #ifdef EXPERIMENTAL
   { STRING_SIZE_TUPLE("eq"),            2,  2,  1,  func_eq},
   { STRING_SIZE_TUPLE("not"),           0,  1,  1,  func_not},
+#endif
+#ifdef KMK
+  { STRING_SIZE_TUPLE("toupper"),       0,  1,  1,  func_toupper_tolower},
+  { STRING_SIZE_TUPLE("tolower"),       0,  1,  1,  func_toupper_tolower},
 #endif
 };
 

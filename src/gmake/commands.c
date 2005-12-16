@@ -352,6 +352,12 @@ chop_commands (struct commands *cmds)
           && (strstr (p, "$(MAKE)") != 0 || strstr (p, "${MAKE}") != 0))
         flags |= COMMANDS_RECURSE;
 
+#ifdef CONFIG_WITH_KMK_BUILTIN
+      /* check if kmk builtin command */
+      if (!strncmp(p, "kmk_builtin_", sizeof("kmk_builtin_") - 1))
+        flags |= COMMANDS_BUILTIN;
+#endif
+
       cmds->lines_flags[idx] = flags;
       cmds->any_recurse |= flags & COMMANDS_RECURSE;
     }
@@ -375,6 +381,7 @@ execute_file_commands (struct file *file)
   if (*p == '\0')
     {
       /* If there are no commands, assume everything worked.  */
+      file->command_flags |= COMMANDS_NO_COMMANDS;
       set_command_state (file, cs_running);
       file->update_status = 0;
       notice_finished_file (file);
