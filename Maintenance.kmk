@@ -26,7 +26,7 @@
 DEPTH = .
 include $(PATH_KBUILD)/header.kmk
 
-MAINTENANCE_PATCH = -p1
+MAINTENANCE_PATCH = -p2
 
 RMTREE = $(ECHO) todo: $(RM) -Rf
 RMTREE = rm -Rf
