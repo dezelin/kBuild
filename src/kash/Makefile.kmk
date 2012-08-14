@@ -49,6 +49,8 @@ kash_DEFS.darwin = \
 	HAVE_SYS_SIGNAME HAVE_SYSCTL_H HAVE_SETPROGNAME
 kash_DEFS.dragonfly = \
 	HAVE_SYS_SIGNAME HAVE_SYSCTL_H HAVE_SETPROGNAME
+kash_DEFS.netbsd = \
+	HAVE_SYS_SIGNAME HAVE_SYSCTL_H HAVE_SETPROGNAME
 kash_DEFS.freebsd = \
 	HAVE_SYS_SIGNAME HAVE_SYSCTL_H HAVE_SETPROGNAME
 kash_DEFS.openbsd = \
@@ -132,7 +134,7 @@ kash_main.c_DEFS = KBUILD_SVN_REV=$(KBUILD_SVN_REV)
 #kash.man_SOURCES = sh.1=>kash.1
 
 
-if1of ($(KBUILD_TARGET), win os2)
+if1of ($(KBUILD_TARGET), win os2 netbsd)
 
 #
 # Use the pregenerated code.

@@ -77,6 +77,9 @@ __FBSDID("$FreeBSD: src/usr.bin/xinstall/xinstall.c,v 1.66 2005/01/25 14:34:57 s
 #if defined(__EMX__) || defined(_MSC_VER)
 # include <process.h>
 #endif
+#if defined(__NetBSD__)
+# include <util.h>
+#endif
 #include "getopt.h"
 #ifdef __sun__
 # include "solfakes.h"
@@ -146,7 +149,6 @@ static struct option long_options[] =
     { 0, 0,	0, 0 },
 };
 
-
 static int	copy(int, const char *, int, const char *, off_t);
 static int	compare(int, const char *, size_t, int, const char *, size_t);
 static int	create_newfile(const char *, int, struct stat *);
@@ -211,7 +213,11 @@ kmk_builtin_install(int argc, char *argv[], char ** envp)
 		case 'f':
 #ifdef UF_IMMUTABLE
 			flags = optarg;
+#if defined(__NetBSD__)
+			if (string_to_flags(&flags, &fset, NULL))
+#else
 			if (strtofflags(&flags, &fset, NULL))
+#endif
 				return errx(EX_USAGE, "%s: invalid flag", flags);
 			iflags |= SETFLAGS;
 #else

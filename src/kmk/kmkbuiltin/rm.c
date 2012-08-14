@@ -73,6 +73,9 @@ static char sccsid[] = "@(#)rm.c	8.5 (Berkeley) 4/18/94";
 # include <direct.h>
 # include <limits.h>
 #endif
+#if defined(__NetBSD__)
+# include <util.h>
+#endif
 #include "kmkbuiltin.h"
 #include "kbuild_protection.h"
 
@@ -636,8 +639,13 @@ check(char *path, char *name, struct stat *sp)
 			return (1);
 		bsd_strmode(sp->st_mode, modep);
 #ifdef SF_APPEND
+#ifdef __NetBSD__
+		if ((flagsp = flags_to_string(sp->st_flags, "")) == NULL)
+			exit(err(1, "flags_to_string"));
+#else
 		if ((flagsp = fflagstostr(sp->st_flags)) == NULL)
 			exit(err(1, "fflagstostr"));
+#endif
 		(void)fprintf(stderr, "override %s%s%s/%s %s%sfor %s? ",
 		              modep + 1, modep[9] == ' ' ? "" : " ",
 		              user_from_uid(sp->st_uid, 0),

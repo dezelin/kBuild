@@ -101,6 +101,10 @@ kmk_LDADD =	@LIBOBJS@ @ALLOCA@ $(GLOBLIB) @GETLOADAVG_LIBS@
 if WINDOWSENV
     kmk_LDADD += $(W32LIB)
 endif
+# Only process if target us NetBSD
+if NETBSDENV
+    kmk_LDADD += $(LIBUTIL)
+endif
 
 man_MANS =	make.1
 

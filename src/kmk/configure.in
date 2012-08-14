@@ -387,7 +387,9 @@ MAKE_HOST="$host"
 AC_SUBST(MAKE_HOST)
 
 w32_target_env=no
+netbsd_target_env=no
 AM_CONDITIONAL([WINDOWSENV], false)
+AM_CONDITIONAL([NETBSDENV], false)
 
 case "$host" in
   *-*-mingw32)
@@ -396,9 +398,29 @@ case "$host" in
     AC_DEFINE([WINDOWS32], [1], [Use platform specific coding])
     AC_DEFINE([HAVE_DOS_PATHS], [1], [Use platform specific coding])
     ;;
+  *-*-netbsd*)
+    AM_CONDITIONAL(NETBSDENV, true)
+    netbsd_target_env=yes
+    ;;
 esac
 
 AC_DEFINE_UNQUOTED(PATH_SEPARATOR_CHAR,'$PATH_SEPARATOR',[Define to the character that separates directories in PATH.])
+
+# For string_to_flags() and flags_to_string() on NetBSD.
+
+if test "$netbsd_target_env" != no; then
+  AC_CHECK_HEADER([util.h], [
+    AC_CHECK_LIB([util], [string_to_flags], [
+      LIBUTIL="-lutil"
+      AC_DEFINE(HAVE_STRING_TO_FLAGS, 1, [Define if string_to_flags() in -lutil can be used.])
+    ])
+    AC_CHECK_LIB([util], [flags_to_string], [
+      LIBUTIL="-lutil"
+      AC_DEFINE(HAVE_FLAGS_TO_STRING, 1, [Define if flags_to_string() in -lutil can be used.])
+    ])
+  ])
+  AC_SUBST([LIBUTIL])
+fi
 
 # Include the Maintainer's Makefile section, if it's here.
 

@@ -57,10 +57,14 @@ TEMPLATE_BIN-KMK_INCS = $(kmk_0_OUTDIR) . $(TEMPLATE_BIN-THREADED_INCS)
 TEMPLATE_BIN-KMK_INCS.darwin = glob
 TEMPLATE_BIN-KMK_INCS.dragonfly = glob
 TEMPLATE_BIN-KMK_INCS.freebsd = glob
+TEMPLATE_BIN-KMK_INCS.netbsd = glob
 TEMPLATE_BIN-KMK_INCS.haiku = glob
 TEMPLATE_BIN-KMK_INCS.openbsd = glob
 TEMPLATE_BIN-KMK_INCS.solaris = glob
 TEMPLATE_BIN-KMK_LIBS = $(TEMPLATE_BIN-THREADED_LIBS) $(kmkmissing_1_TARGET) $(LIB_KUTIL)
+ifeq ($(KBUILD_TARGET),netbsd)
+ TEMPLATE_BIN-KMK_LIBS += util
+endif
 ifdef ELECTRIC_HEAP # for electric heap (see electric.c) - windows only.
 ifeq ($(KBUILD_TARGET),win)
  TEMPLATE_BIN-KMK_CFLAGS = $(TEMPLATE_BIN-THREADED_CFLAGS) /FI$(kmk_DEFPATH)/electric.h -DELECTRIC_HEAP=1
@@ -99,6 +103,10 @@ kmkmissing_SOURCES.dragonfly = \
 	glob/fnmatch.c
 
 kmkmissing_SOURCES.freebsd = \
+	glob/glob.c \
+	glob/fnmatch.c
+
+kmkmissing_SOURCES.netbsd = \
 	glob/glob.c \
 	glob/fnmatch.c
 
